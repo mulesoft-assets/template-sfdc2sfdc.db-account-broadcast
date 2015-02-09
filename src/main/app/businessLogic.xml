@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.6.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd">
+
+	<flow name="processAQueueObjectsToBatchFlow">
+		<jms:inbound-endpoint topic="A" connector-ref="Active_MQ"
+			doc:name="JMS Topic A">
+			<jms:jmsmessage-to-object-transformer />
+		</jms:inbound-endpoint>
+		<collection-aggregator timeout="1000"
+			failOnTimeout="false" doc:name="Collection Aggregator" />
+		<batch:execute name="syncAccountsBatch" doc:name="Batch Execute" />
+		<exception-strategy ref="defaultChoiceExceptionStrategy"
+			doc:name="Default Exception Strategy" />
+	</flow>
+	<batch:job name="syncAccountsBatch">
+		<batch:threading-profile poolExhaustedAction="WAIT" />
+		<batch:process-records>
+			<batch:step name="foreachAccountInAGetAccountInBStep">
+				<enricher source="#[payload]" target="#[recordVars['accountInB']]"
+					doc:name="store result in record var 'accountInB'">
+					<sfdc:query-single config-ref="SalesforceB"
+						query="SELECT Id FROM Account WHERE Name = '#[payload['Name']]'"
+						doc:name="query Account in Salesforce Instance B" />
+				</enricher>
+			</batch:step>
+			<batch:step name="foreachAccountInAUpsertAccountInBStep">
+				<expression-component doc:name="set ID for upsert"><![CDATA[if (recordVars['accountInB'] instanceof NullPayload) {
+	// Remove ID as it is an insert
+	payload.remove('Id')
+} else {
+	// Add target system ID as it is an update
+    payload.put('Id', recordVars['accountInB']['Id'])
+}]]></expression-component>
+				<expression-component
+					doc:name="remove unnecessary fields and map field types"><![CDATA[payload.remove('LastModifiedDate');
+payload.remove('LastModifiedById');
+
+// TODO - This is necessary due to: https://www.mulesoft.org/jira/browse/CLDCONNECT-1248
+payload.put('NumberOfEmployees', Integer.parseInt(payload['NumberOfEmployees']) );]]></expression-component>
+				<batch:commit size="200" doc:name="Batch Commit">
+					<sfdc:upsert config-ref="SalesforceB"
+						externalIdFieldName="Id" type="Account"
+						doc:name="upsert Accounts in Salesforce Instance B">
+						<sfdc:objects ref="#[payload]" />
+					</sfdc:upsert>
+				</batch:commit>
+			</batch:step>
+		</batch:process-records>
+		<batch:on-complete>
+			<json:object-to-json-transformer
+				doc:name="transform BatchJobInstance to JSON" />
+			<logger message="The SFDC Batch job has finished: #[payload]" level="INFO"
+				doc:name="log 'Batch job has finished'" />
+		</batch:on-complete>
+	</batch:job>
+
+	<flow name="processBQueueObjectsToBatchFlow">
+		<jms:inbound-endpoint topic="A" connector-ref="Active_MQ"
+			doc:name="JMS Topic A">
+			<jms:jmsmessage-to-object-transformer />
+		</jms:inbound-endpoint>
+
+		<collection-aggregator timeout="1000"
+			failOnTimeout="false" doc:name="Collection Aggregator" />
+		<batch:execute name="dbSyncAccountsBatch" doc:name="Batch Execute" />
+		<exception-strategy ref="defaultChoiceExceptionStrategy"
+			doc:name="Default Exception Strategy" />
+	</flow>
+
+	<batch:job name="dbSyncAccountsBatch">
+		<batch:threading-profile poolExhaustedAction="WAIT" />
+		<batch:process-records>
+			<batch:step name="checkAccountInDatabaseStep">
+				<enricher source="#[payload]" target="#[recordVars.account]"
+					doc:name="Store payload into variable 'account'">
+					<db:select config-ref="GenericDatabaseConnector"
+						doc:name="query Account by matching name from Database">
+						<db:template-query-ref name="QueryAccount" />
+						<db:in-param name="paramName" value="#[payload.Name]" />
+					</db:select>
+				</enricher>
+
+
+			</batch:step>
+			<batch:step name="updateAccountInDatabaseStep"
+				accept-expression="#[recordVars['account'].size() &gt; 0]">
+				<batch:commit size="100" doc:name="Batch Commit">
+					<db:update config-ref="GenericDatabaseConnector"
+						doc:name="update account in database" bulkMode="true">
+                        <db:parameterized-query><![CDATA[UPDATE Account SET
+AccountNumber = #[payload['AccountNumber']], 
+Description = #[payload['Description']],  
+NumberOfEmployees = #[payload['NumberOfEmployees']], 
+LastModifiedDate = CURRENT_TIMESTAMP
+WHERE Name = #[payload['Name']]]]></db:parameterized-query>
+
+
+
+
+					</db:update>
+				</batch:commit>
+			</batch:step>
+			<batch:step name="insertAccountInDatabaseStep"
+				accept-expression="#[recordVars['account'].size() == 0]">
+				<batch:commit size="100" doc:name="Batch Commit">
+					<db:insert config-ref="GenericDatabaseConnector"
+						doc:name="insert account in database" bulkMode="true">
+						<db:parameterized-query><![CDATA[INSERT INTO Account (
+	AccountNumber,
+	Description,
+	Name,
+	NumberOfEmployees,
+	SalesforceId,
+	LastModifiedById,
+	LastModifiedDate
+) VALUES (
+	#[payload['AccountNumber']],
+	#[payload['Description']],
+	#[payload['Name']],
+	#[payload['NumberOfEmployees']],
+	#[payload['Id']],
+	CURRENT_USER,
+	CURRENT_TIMESTAMP
+)]]></db:parameterized-query>
+
+
+
+					</db:insert>
+				</batch:commit>
+			</batch:step>
+		</batch:process-records>
+		<batch:on-complete>
+
+			<json:object-to-json-transformer
+				doc:name="transform BatchJobInstance to JSON" />
+			<logger message="The DB Batch job has finished: #[payload]" level="INFO"
+				doc:name="log 'Batch job has finished'" />
+		</batch:on-complete>
+	</batch:job>
+
+
+</mule>
