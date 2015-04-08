@@ -98,6 +98,7 @@ public class BusinessLogicPushNotificationIT extends AbstractTemplateTestCase {
 		HashMap<String, Object> account = new HashMap<String, Object>();
 		account.put("Name", accountName);
 		
+		Thread.sleep(5000);
 		SubflowInterceptingChainLifecycleWrapper retrieveAccountFlow = getSubFlow("retrieveAccountFlow");
 		retrieveAccountFlow.initialise();
 		message = new DefaultMuleMessage(account, muleContext);

@@ -5,7 +5,7 @@
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.6.0"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.6.1"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:json="http://www.mulesoft.org/schema/mule/json"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
@@ -17,13 +17,14 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
 http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd">
 
+	
 	<flow name="processAQueueObjectsToBatchFlow">
 		<jms:inbound-endpoint topic="A" connector-ref="Active_MQ"
 			doc:name="JMS Topic A">
 			<jms:jmsmessage-to-object-transformer />
 		</jms:inbound-endpoint>
-		<collection-aggregator timeout="1000"
-			failOnTimeout="false" doc:name="Collection Aggregator" />
+        <byte-array-to-serializable-transformer doc:name="Byte Array to Serializable"/>
+
 		<batch:execute name="syncAccountsBatch" doc:name="Batch Execute" />
 		<exception-strategy ref="defaultChoiceExceptionStrategy"
 			doc:name="Default Exception Strategy" />
@@ -75,9 +76,8 @@ payload.put('NumberOfEmployees', Integer.parseInt(payload['NumberOfEmployees']) 
 			doc:name="JMS Topic A">
 			<jms:jmsmessage-to-object-transformer />
 		</jms:inbound-endpoint>
+        <byte-array-to-serializable-transformer doc:name="Byte Array to Serializable"/>
 
-		<collection-aggregator timeout="1000"
-			failOnTimeout="false" doc:name="Collection Aggregator" />
 		<batch:execute name="dbSyncAccountsBatch" doc:name="Batch Execute" />
 		<exception-strategy ref="defaultChoiceExceptionStrategy"
 			doc:name="Default Exception Strategy" />
@@ -91,8 +91,9 @@ payload.put('NumberOfEmployees', Integer.parseInt(payload['NumberOfEmployees']) 
 					doc:name="Store payload into variable 'account'">
 					<db:select config-ref="GenericDatabaseConnector"
 						doc:name="query Account by matching name from Database">
-						<db:template-query-ref name="QueryAccount" />
-						<db:in-param name="paramName" value="#[payload.Name]" />
+                        <db:template-query-ref name="QueryAccount"/>
+                        <db:in-param name="paramName" value="#[payload.Name]"/>
+
 					</db:select>
 				</enricher>
 
@@ -113,6 +114,7 @@ WHERE Name = #[payload['Name']]]]></db:parameterized-query>
 
 
 
+
 					</db:update>
 				</batch:commit>
 			</batch:step>
@@ -121,7 +123,7 @@ WHERE Name = #[payload['Name']]]]></db:parameterized-query>
 				<batch:commit size="100" doc:name="Batch Commit">
 					<db:insert config-ref="GenericDatabaseConnector"
 						doc:name="insert account in database" bulkMode="true">
-						<db:parameterized-query><![CDATA[INSERT INTO Account (
+                        <db:parameterized-query><![CDATA[INSERT INTO Account (
 	AccountNumber,
 	Description,
 	Name,
@@ -141,6 +143,7 @@ WHERE Name = #[payload['Name']]]]></db:parameterized-query>
 
 
 
+
 					</db:insert>
 				</batch:commit>
 			</batch:step>
@@ -154,5 +157,5 @@ WHERE Name = #[payload['Name']]]]></db:parameterized-query>
 		</batch:on-complete>
 	</batch:job>
 
-
+	
 </mule>
