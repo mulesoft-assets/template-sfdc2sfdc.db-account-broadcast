@@ -68,6 +68,7 @@ public class BusinessLogicIT extends AbstractTemplateTestCase {
 		retrieveAccountFromBFlow = getSubFlow("retrieveAccountFlow");
 		retrieveAccountFromBFlow.initialise();
 		selectAccountFromDBFlow = getSubFlow("selectAccountFromDB");
+		selectAccountFromDBFlow.initialise();
 		createEntities();
 	}
 
