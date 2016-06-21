@@ -26,7 +26,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 		</jms:inbound-endpoint>
         <byte-array-to-serializable-transformer doc:name="Byte Array to Serializable"/>
 
-		<batch:execute name="syncAccountsBatch" doc:name="Execute suncAccountsBatch" />
+		<batch:execute name="syncAccountsBatch" doc:name="Execute syncAccountsBatch" />
 		<exception-strategy ref="defaultChoiceExceptionStrategy"
 			doc:name="Default Exception Strategy" />
 	</flow>
