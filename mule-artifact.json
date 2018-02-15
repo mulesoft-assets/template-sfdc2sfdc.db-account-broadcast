@@ -1,7 +1,7 @@
 {
   "configs": [
+    "businessLogic.xml",
     "config.xml",
-    "businesslogic.xml",
     "endpoints.xml",
     "errorHandling.xml"
   ],

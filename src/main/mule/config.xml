@@ -15,11 +15,11 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	
 	<jms:config name="ActiveMQ" doc:name="JMS Config" doc:id="5411c616-8b37-48d4-b875-2025440eef69" >
-		<jms:active-mq-connection username="admin" password="admin">
+		<jms:active-mq-connection username="${jms.username}" password="${jms.password}">
 			<jms:caching-strategy >
 				<jms:default-caching />
 			</jms:caching-strategy>
-			<jms:factory-configuration brokerUrl="tcp://localhost:61616" maxRedelivery="5"/>
+			<jms:factory-configuration brokerUrl="${jms.url}" maxRedelivery="5"/>
 		</jms:active-mq-connection>
 		<jms:consumer-config>
 			<jms:consumer-type >
