@@ -61,7 +61,7 @@ payload.Envelope.Body.notifications.Notification.*sObject]]></ee:set-payload>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-payload ]]></ee:set-payload>
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 				<jms:publish doc:name="JMS Topic A" doc:id="adfc9f71-0802-4f5a-96c7-ec1fe6310d76" destination="A" config-ref="ActiveMQ" destinationType="TOPIC">
@@ -84,7 +84,7 @@ payload ]]></ee:set-payload>
     </os:retrieve>
     <salesforce:query config-ref="Salesforce_Sfdc_A_config" doc:name="Query Accounts from Salesforce instance A" doc:id="ebcf71a8-3192-4437-b2cb-b23f008afae5">
 		<salesforce:salesforce-query>SELECT AccountNumber, Description, Id, Industry, LastModifiedDate, LastModifiedById, Name, NumberOfEmployees FROM Account WHERE LastModifiedDate &gt; :lastModifiedDate AND NumberOfEmployees &gt; 5000</salesforce:salesforce-query>
-		<salesforce:parameters><![CDATA[#[output applicaton/java
+		<salesforce:parameters><![CDATA[#[output application/java
 ---
 {
 	"lastModifiedDate" : vars.lastQueryTimestamp
