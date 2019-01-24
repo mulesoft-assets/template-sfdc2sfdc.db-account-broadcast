@@ -99,8 +99,8 @@ output application/java
 payload map ($.Id)]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<scripting:execute engine="groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="1b39d02f-f0fb-4a96-9001-525954059d4c">
-				<scripting:code>sleep(1000)</scripting:code>
+		<scripting:execute engine="Groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="1b39d02f-f0fb-4a96-9001-525954059d4c">
+				<scripting:code>sleep(10000)</scripting:code>
 			</scripting:execute>
 	</munit:before-test>
 	<munit:test name="test-suite-FlowTest" description="Test" doc:id="4ffcda90-21bf-4cd4-9460-09cf6ca578e5" >
@@ -124,8 +124,8 @@ payload filter($.Name == vars.accounts[0].Name or
 					<flow-ref doc:name="processBQueueObjectsToBatchFlow" doc:id="c5ee9854-7afd-44f9-a368-da627f78a0db" name="processBQueueObjectsToBatchFlow"/>
 				</route>
 			</scatter-gather>
-			<scripting:execute doc:name="Sleep for 30s until the processing is completed" doc:id="b09fe305-3000-4571-b824-8b555395ccb7" engine="groovy">
-				<scripting:code >sleep(30000)</scripting:code>
+			<scripting:execute doc:name="Sleep for 60s until the processing is completed" doc:id="b09fe305-3000-4571-b824-8b555395ccb7" engine="groovy">
+				<scripting:code >sleep(60000)</scripting:code>
 			</scripting:execute> 
 		</munit:execution>
 		<munit:validation>
