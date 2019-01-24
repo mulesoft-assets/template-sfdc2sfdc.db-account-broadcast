@@ -203,7 +203,7 @@ output application/java
 payload map ($.Id)]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<munit-tools:assert-that doc:name="Assert that we found created Account" doc:id="e746230a-b26e-4405-b424-bee907928fd1" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcCreatedRecord[0].Name]" message="Record should be created to SFDC "/>
+		<munit-tools:assert-that doc:name="Assert that we found created Account" doc:id="e746230a-b26e-4405-b424-bee907928fd1" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcCreatedRecord[0].Name]" message="Record should be created in SFDC "/>
 		<munit-tools:assert-that doc:name="Assert that we found updated Account" doc:id="1528c94f-1db5-4f6d-afb6-9ced923ded6e" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcUpdatedRecord[0].Name]" message="Record should be updated in SFDC "/>
 		<munit-tools:assert-that doc:name="Assert that Account was not migrated" doc:id="d46ea9b9-4325-4f41-9027-d9f73e3a0ad9" expression="#[vars.sfdcNoRecord[0]]" is="#[MunitTools::nullValue()]" message="Record shouldn't be migrated to SFDC"/>
 		<munit-tools:verify-call doc:name="Verify SFDC Bulk Upsert Call" doc:id="00e70f78-3cf7-4011-8f37-ef364910e6a5" processor="salesforce:upsert-bulk" times="1" />
