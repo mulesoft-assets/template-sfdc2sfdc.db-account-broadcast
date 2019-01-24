@@ -99,8 +99,8 @@ output application/java
 payload map ($.Id)]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<scripting:execute engine="groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="1b39d02f-f0fb-4a96-9001-525954059d4c">
-				<scripting:code>sleep(1000)</scripting:code>
+		<scripting:execute engine="Groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="1b39d02f-f0fb-4a96-9001-525954059d4c">
+				<scripting:code>sleep(10000)</scripting:code>
 			</scripting:execute>
 	</munit:before-test>
 	<munit:test name="test-suite-FlowTest" description="Test" doc:id="4ffcda90-21bf-4cd4-9460-09cf6ca578e5" >
@@ -124,8 +124,8 @@ payload filter($.Name == vars.accounts[0].Name or
 					<flow-ref doc:name="processBQueueObjectsToBatchFlow" doc:id="c5ee9854-7afd-44f9-a368-da627f78a0db" name="processBQueueObjectsToBatchFlow"/>
 				</route>
 			</scatter-gather>
-			<scripting:execute doc:name="Sleep for 30s until the processing is completed" doc:id="b09fe305-3000-4571-b824-8b555395ccb7" engine="groovy">
-				<scripting:code >sleep(30000)</scripting:code>
+			<scripting:execute doc:name="Sleep for 60s until the processing is completed" doc:id="b09fe305-3000-4571-b824-8b555395ccb7" engine="groovy">
+				<scripting:code >sleep(60000)</scripting:code>
 			</scripting:execute> 
 		</munit:execution>
 		<munit:validation>
@@ -140,7 +140,6 @@ payload filter($.Name == vars.accounts[0].Name or
 	'name2' : vars.accounts[1].Name,
 	'name3' : vars.accounts[2].Name}]]]></db:input-parameters>
 		</db:select>
-		<logger level="INFO" doc:name="Logger" doc:id="cccb2d55-2ea0-4e4e-a9cc-4af5955949bb" message="#[output application/json --- payload]"/>
 		<ee:transform doc:name="Filter records" doc:id="b8c5d9df-887f-4031-8c59-66c271c2e13a">
 			<ee:message>
 			</ee:message>
@@ -162,9 +161,9 @@ payload filter ($.Name == vars.accounts[1].Name
 )]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<munit-tools:assert-that doc:name="Assert that we found created Account" doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[vars.createdRecord[0].Name]" is="#[MunitTools::notNullValue()]" />
-		<munit-tools:assert-that doc:name="Assert that we found updated Account" doc:id="81c9545e-6f9c-4e4b-9a72-8e9662259202" expression="#[vars.updatedRecord[0].Name]" is="#[MunitTools::notNullValue()]"/>
-		<munit-tools:assert-that doc:name="Assert that Account was not migrated" doc:id="fa13f66b-1cb2-4bed-ac23-5786f311fde9" expression="#[vars.noRecord[0]]" is="#[MunitTools::nullValue()]"/>
+		<munit-tools:assert-that doc:name="Assert that we found created Account" doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[vars.createdRecord[0].Name]" is="#[MunitTools::notNullValue()]" message="Record should be created in DB "/>
+		<munit-tools:assert-that doc:name="Assert that we found updated Account" doc:id="81c9545e-6f9c-4e4b-9a72-8e9662259202" expression="#[vars.updatedRecord[0].Name]" is="#[MunitTools::notNullValue()]" message="Record should be updated in DB"/>
+		<munit-tools:assert-that doc:name="Assert that Account was not migrated" doc:id="fa13f66b-1cb2-4bed-ac23-5786f311fde9" expression="#[vars.noRecord[0]]" is="#[MunitTools::nullValue()]" message="Record shouldn't be migrated to DB"/>
 		<munit-tools:verify-call doc:name="Verify DB Bulk Insert Call" doc:id="016903b7-1de4-4be0-bc4e-e0cf67592e74" processor="db:bulk-insert" times="1"/>
 		<munit-tools:verify-call doc:name="Verify DB Bulk Update Call" doc:id="9ac052df-b435-4e6d-a421-c7e9296d4ebb" processor="db:bulk-update" times="1"/>
 	</sub-flow>
@@ -179,7 +178,6 @@ payload filter ($.Name == vars.accounts[1].Name
 	"name3" : vars.accounts[0].Name
 }]]]></salesforce:parameters>
 		</salesforce:query>
-		<logger level="INFO" doc:name="Logger" doc:id="278ef60e-10c2-424f-91cd-f6405aa21000" message="#[output application/json --- payload]"/>
 		<ee:transform doc:name="Filter records" doc:id="8fa72bd6-e4f4-4eec-a227-d061330759c1" >
 			<ee:message >
 			</ee:message>
@@ -205,9 +203,9 @@ output application/java
 payload map ($.Id)]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<munit-tools:assert-that doc:name="Assert that we found created Account" doc:id="e746230a-b26e-4405-b424-bee907928fd1" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcCreatedRecord[0].Name]"/>
-		<munit-tools:assert-that doc:name="Assert that we found updated Account" doc:id="1528c94f-1db5-4f6d-afb6-9ced923ded6e" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcUpdatedRecord[0].Name]"/>
-		<munit-tools:assert-that doc:name="Assert that Account was not migrated" doc:id="d46ea9b9-4325-4f41-9027-d9f73e3a0ad9" expression="#[vars.sfdcNoRecord[0]]" is="#[MunitTools::nullValue()]"/>
+		<munit-tools:assert-that doc:name="Assert that we found created Account" doc:id="e746230a-b26e-4405-b424-bee907928fd1" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcCreatedRecord[0].Name]" message="Record should be created in SFDC "/>
+		<munit-tools:assert-that doc:name="Assert that we found updated Account" doc:id="1528c94f-1db5-4f6d-afb6-9ced923ded6e" is="#[MunitTools::notNullValue()]" expression="#[vars.sfdcUpdatedRecord[0].Name]" message="Record should be updated in SFDC "/>
+		<munit-tools:assert-that doc:name="Assert that Account was not migrated" doc:id="d46ea9b9-4325-4f41-9027-d9f73e3a0ad9" expression="#[vars.sfdcNoRecord[0]]" is="#[MunitTools::nullValue()]" message="Record shouldn't be migrated to SFDC"/>
 		<munit-tools:verify-call doc:name="Verify SFDC Bulk Upsert Call" doc:id="00e70f78-3cf7-4011-8f37-ef364910e6a5" processor="salesforce:upsert-bulk" times="1" />
 	</sub-flow>
 	<munit:after-test name="test-suiteAfter_Test" description="After tests actions" doc:id="5b85bb9e-67e6-47f7-8f71-53a39f147fc8" >
