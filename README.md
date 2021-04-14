@@ -1,5 +1,5 @@
 
-# Anypoint Template: Salesforce to Salesforce and Database Account Broadcast	
+# Anypoint Template: Salesforce to Salesforce and Database Account Broadcast
 
 <!-- Header (start) -->
 Synchronizes online accounts from a Salesforce instance to many destination systems using the publish-subscribe pattern. Each time a new account or a change occurs, the integration polls for changes in the Salesforce source organization, publishes the changes to a JMS topic, and each subscriber is then responsible for updating the accounts in the target systems.
